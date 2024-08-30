@@ -196,18 +196,15 @@ def main():
         print(f"Error creating output directory {output_dir}: {e}")
         return
 
-    # Skriver den originale LaTeX-dokumentet til en fil
     original_filename = os.path.join(output_dir, f"original_latex_{timestamp}.tex")
     write_to_file(latex_text, original_filename)
     print(f"Original LaTeX document written to: {original_filename}")
 
-    # Tokeniserer og skriver tokens til JSON
     tokens = tokenize_latex(latex_text)
     tokens_filename = os.path.join(output_dir, f"tokens_{timestamp}.json")
     write_to_json(tokens, tokens_filename)
     print(f"Tokens written to JSON file: {tokens_filename}")
 
-    # Oversetter og skriver det oversatte dokumentet
     translated_document = translate_latex_document(latex_text)
     translated_filename = os.path.join(output_dir, f"translated_latex_{timestamp}.tex")
     write_to_file(translated_document, translated_filename)
