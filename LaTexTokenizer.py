@@ -1,3 +1,4 @@
+import json
 import re
 import os
 from datetime import datetime
@@ -42,13 +43,13 @@ def get_token_type(token: str) -> str:
         return 'comment'
     elif token == '\n':
         return 'newline'
-    elif re.match(r'\s*/[^\s]+\.(pdf|eps|png|jpg|jpeg|tex)$', token):  # File paths
+    elif re.match(r'\s*/[^\s]+\.(pdf|eps|png|jpg|jpeg|tex)$', token): 
         return 'filepath'
-    elif re.match(r'[a-zA-Z0-9:_-]+', token) and ':' in token:  # LaTeX references
+    elif re.match(r'[a-zA-Z0-9:_-]+', token) and ':' in token: 
         return 'reference'
     elif is_punctuation(token):
         return 'punctuation'
-    elif token.strip():  # Check if the token is not just whitespace
+    elif token.strip(): 
         return 'text'
     else:
         return 'whitespace'
@@ -68,10 +69,10 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                 'line': line,
                 'position': (token_start, token_end),
                 'multiline': False,
-                'block': 0  # This will be updated later
+                'block': 0 
             })
-            if match.group(5):  # Content in curly braces
-                inner_content = match.group(5)[1:-1]  # Remove outermost braces
+            if match.group(5):  
+                inner_content = match.group(5)[1:-1] 
                 inner_tokens = tokenize_content(inner_content, line, token_start + token.index('{') + 1)
                 tokens.extend(inner_tokens)
         elif token_type == 'text':
@@ -81,7 +82,7 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                 'line': line,
                 'position': (token_start, token_end),
                 'multiline': False,
-                'block': 0  # This will be updated later
+                'block': 0  
             })
         else:
             tokens.append({
@@ -90,7 +91,7 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                 'line': line,
                 'position': (token_start, token_end),
                 'multiline': False,
-                'block': 0  # This will be updated later
+                'block': 0  
             })
     return tokens
 
@@ -140,9 +141,9 @@ def detokenize_latex(tokens: List[Dict[str, Any]]) -> str:
     result = []
     for token in tokens:
         if token['type'] == 'newline':
-            result.append('\n')  # Add a newline for newline tokens
+            result.append('\n') 
         elif token['type'] == 'whitespace':
-            result.append(' ')   # Add a space for whitespace tokens
+            result.append(' ') 
         else:
             result.append(token['value'])
     return ''.join(result)
@@ -168,6 +169,14 @@ def write_to_file(content: str, filename: str) -> None:
     except IOError as e:
         print(f"Error writing to file {filename}: {e}")
 
+def write_to_json(tokens: List[Dict[str, Any]], filename: str) -> None:
+    try:
+        with open(filename, 'w', encoding='utf-8') as file:
+            json.dump(tokens, file, ensure_ascii=False, indent=4)
+    except IOError as e:
+        print(f"Error writing to file {filename}: {e}")
+
+
 def main():
     input_file = r"C:\Dev\AKVA_connect_manuals\User manual\src\english\chapters\barge_control\barge_control.tex"
     
@@ -187,15 +196,18 @@ def main():
         print(f"Error creating output directory {output_dir}: {e}")
         return
 
-    tokens = tokenize_latex(latex_text)
-    tokens_filename = os.path.join(output_dir, f"tokens_{timestamp}.txt")
-    tokens_content = "\n".join([f"Type: {token['type']}, Value: {token['value']}, Line: {token['line']}, "
-                                f"Position: {token['position']}, Multiline: {token['multiline']}, "
-                                f"Block: {token['block']}"
-                                for token in tokens])
-    write_to_file(tokens_content, tokens_filename)
-    print(f"Tokens written to: {tokens_filename}")
+    # Skriver den originale LaTeX-dokumentet til en fil
+    original_filename = os.path.join(output_dir, f"original_latex_{timestamp}.tex")
+    write_to_file(latex_text, original_filename)
+    print(f"Original LaTeX document written to: {original_filename}")
 
+    # Tokeniserer og skriver tokens til JSON
+    tokens = tokenize_latex(latex_text)
+    tokens_filename = os.path.join(output_dir, f"tokens_{timestamp}.json")
+    write_to_json(tokens, tokens_filename)
+    print(f"Tokens written to JSON file: {tokens_filename}")
+
+    # Oversetter og skriver det oversatte dokumentet
     translated_document = translate_latex_document(latex_text)
     translated_filename = os.path.join(output_dir, f"translated_latex_{timestamp}.tex")
     write_to_file(translated_document, translated_filename)
