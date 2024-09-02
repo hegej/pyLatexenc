@@ -60,7 +60,14 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
         token = match.group(0)
         token_start = start + match.start()
         token_end = start + match.end()
-        token_type = get_token_type(token)
+        
+        if token.isspace():
+            if '\n' in token:
+                token_type = 'newline'
+            else:
+                token_type = 'whitespace'
+        else:
+            token_type = get_token_type(token)
         
         if token_type in ['structure', 'command']:
             command_end = token.find('{') if '{' in token else None
@@ -74,7 +81,7 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                     'multiline': False,
                     'block': 0 
                 })
-
+                # Add opening bracket
                 tokens.append({
                     'type': 'bracket',
                     'value': '{',
@@ -83,10 +90,11 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                     'multiline': False,
                     'block': 0
                 })
-                
+                # Tokenize the content inside brackets
                 inner_content = token[command_end+1:-1]
                 inner_tokens = tokenize_content(inner_content, line, token_start + command_end + 1)
                 tokens.extend(inner_tokens)
+                # Add closing bracket
                 tokens.append({
                     'type': 'bracket',
                     'value': '}',
@@ -104,15 +112,6 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                     'multiline': False,
                     'block': 0 
                 })
-        elif token_type == 'text':
-            tokens.append({
-                'type': 'text',
-                'value': token,
-                'line': line,
-                'position': (token_start, token_end),
-                'multiline': False,
-                'block': 0  
-            })
         else:
             tokens.append({
                 'type': token_type,
@@ -122,6 +121,10 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                 'multiline': False,
                 'block': 0  
             })
+        
+        if token_type == 'newline':
+            line += token.count('\n')
+    
     return tokens
 
 def tokenize_latex(text: str) -> List[Dict[str, Any]]:
@@ -129,83 +132,24 @@ def tokenize_latex(text: str) -> List[Dict[str, Any]]:
     block_stack = [0]
     current_block = 0
     
-    lines = text.split('\n')
-    for line_number, line in enumerate(lines, 1):
-        line_tokens = tokenize_content(line, line_number, 0)
-        for token in line_tokens:
-            if token['type'] in ['structure', 'begin']:
-                current_block += 1
-                block_stack.append(current_block)
-            elif token['type'] == 'end' and len(block_stack) > 1:
-                block_stack.pop()
-                current_block = block_stack[-1]
-            
-            token['block'] = block_stack[-1]
-        tokens.extend(line_tokens)
-
-    i = 0
-    while i < len(tokens) - 1:
-        if tokens[i]['type'] == 'text' and tokens[i+1]['type'] == 'text' and tokens[i+1]['line'] == tokens[i]['line'] + 1:
-            tokens[i]['multiline'] = True
-            tokens[i]['value'] += ' ' + tokens[i+1]['value']
-            tokens[i]['position'] = (tokens[i]['position'][0], tokens[i+1]['position'][1])
-            tokens.pop(i+1)
-        else:
-            i += 1
-
-    return tokens
-
-def tokenize_latex(text: str) -> List[Dict[str, Any]]:
-    tokens = []
-    block_stack = [0]
-    current_block = 0
-    
-    lines = text.split('\n')
-    for line_number, line in enumerate(lines, 1):
-        line_tokens = tokenize_content(line, line_number, 0)
-        for token in line_tokens:
-            if token['type'] in ['structure', 'begin']:
-                current_block += 1
-                block_stack.append(current_block)
-            elif token['type'] == 'end' and len(block_stack) > 1:
-                block_stack.pop()
-                current_block = block_stack[-1]
-            
-            token['block'] = block_stack[-1]
-        tokens.extend(line_tokens)
-
-    return tokens
-
-def tokenize_latex(text: str) -> List[Dict[str, Any]]:
-    tokens = []
-    block_stack = [0]
-    current_block = 0
-
-    lines = text.split('\n')
-    for line_number, line in enumerate(lines, 1):
-        line_tokens = tokenize_content(line, line_number, 0)
-        for token in line_tokens:
-            if token['type'] in ['structure', 'begin']:
-                current_block += 1
-                block_stack.append(current_block)
-            elif token['type'] == 'end' and len(block_stack) > 1:
-                block_stack.pop()
-                current_block = block_stack[-1]
-
-            token['block'] = block_stack[-1]
-        tokens.extend(line_tokens)
+    line_tokens = tokenize_content(text, 1, 0)
+    for token in line_tokens:
+        if token['type'] in ['structure', 'begin']:
+            current_block += 1
+            block_stack.append(current_block)
+        elif token['type'] == 'end' and len(block_stack) > 1:
+            block_stack.pop()
+            current_block = block_stack[-1]
+        
+        token['block'] = block_stack[-1]
+        tokens.append(token)
 
     return tokens
 
 def detokenize_latex(tokens: List[Dict[str, Any]]) -> str:
     result = []
     for token in tokens:
-        if token['type'] == 'newline':
-            result.append('\n') 
-        elif token['type'] == 'whitespace':
-            result.append(' ') 
-        else:
-            result.append(token['value'])
+        result.append(token['value'])
     return ''.join(result)
 
 def mock_translate(text: str) -> str:
