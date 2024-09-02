@@ -178,7 +178,7 @@ def write_to_json(tokens: List[Dict[str, Any]], filename: str) -> None:
 
 
 def main():
-    input_file = r"C:\Dev\AKVA_connect_manuals\User manual\src\english\chapters\barge_control\barge_control.tex"
+    input_file = r"C:\Dev\AKVA_connect_manuals\User manual\src\english\chapters\camera_view\camera_view.tex"
     
     try:
         with open(input_file, 'r', encoding='utf-8') as file:
