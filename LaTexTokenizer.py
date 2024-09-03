@@ -73,7 +73,6 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
         token_type = get_token_type(token)
         
         if token_type == 'environment':
-            # Treat \begin{...} and \end{...} as single tokens
             tokens.append({
                 'type': token_type,
                 'value': token,
@@ -85,7 +84,7 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
         elif token_type in ['structure', 'command']:
             command_end = token.find('{') if '{' in token else None
             if command_end is not None:
-                # Add the command
+
                 tokens.append({
                     'type': token_type,
                     'value': token[:command_end],
@@ -94,7 +93,7 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                     'multiline': False,
                     'block': 0 
                 })
-                # Add opening bracket
+
                 tokens.append({
                     'type': 'bracket',
                     'value': '{',
@@ -103,11 +102,10 @@ def tokenize_content(content: str, line: int, start: int) -> List[Dict[str, Any]
                     'multiline': False,
                     'block': 0
                 })
-                # Tokenize the content inside brackets
+
                 inner_content = token[command_end+1:-1]
                 inner_tokens = tokenize_content(inner_content, line, token_start + command_end + 1)
                 tokens.extend(inner_tokens)
-                # Add closing bracket
                 tokens.append({
                     'type': 'bracket',
                     'value': '}',
@@ -203,7 +201,7 @@ def consolidate_text_tokens(tokens: List[Dict[str, Any]]) -> List[Dict[str, Any]
     return consolidated
 
 def split_text_block(original: str, translated: str) -> List[str]:
-    # This is a simple split strategy. You might need a more sophisticated one
+    # This is a simple split strategy. May need a more sophisticated one
     # depending on how your translation API behaves.
     original_words = original.split()
     translated_words = translated.split()
@@ -231,7 +229,6 @@ def translate_latex_document(latex_text: str) -> str:
                 translated_text = mock_translate(token['value'])
                 split_text = split_text_block(token['value'], translated_text)
                 
-                # Distribute the translated words back into individual tokens
                 start = token['position'][0]
                 for word in split_text:
                     translated_tokens.append({
@@ -242,7 +239,7 @@ def translate_latex_document(latex_text: str) -> str:
                         'multiline': False,
                         'block': token['block']
                     })
-                    start += len(word) + 1  # +1 for the space
+                    start += len(word) + 1 
             else:
                 translated_tokens.append(token)
         else:
