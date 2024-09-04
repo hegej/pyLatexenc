@@ -209,8 +209,8 @@ def split_text_block(original: str, translated: str) -> List[str]:
     if len(original_words) == len(translated_words):
         return translated_words
     else:
-        # If word count doesn't match, we'll have to use a different strategy
-        # For now, we'll just return the full translated text as one item
+        # If word count doesn't match, I need to use a different strategy
+        # Now it just return the full translated text as one item
         return [translated]
 
 def translate_latex_document(latex_text: str) -> str:

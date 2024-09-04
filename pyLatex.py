@@ -17,7 +17,7 @@ def parse_latex(latex_content):
 def extract_segments(nodes, latex_content):
     segments = []
     for node in nodes:
-        line_number = latex_content[:node.pos].count('\n') + 1  # Calculate the line number
+        line_number = latex_content[:node.pos].count('\n') + 1 
         if isinstance(node, LatexCharsNode):
             segments.append({"type": "text", "content": node.chars, "line": line_number})
         elif isinstance(node, LatexGroupNode) or isinstance(node, LatexEnvironmentNode):
