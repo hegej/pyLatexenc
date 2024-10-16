@@ -202,7 +202,7 @@ def consolidate_text_tokens(tokens: List[Dict[str, Any]]) -> List[Dict[str, Any]
 
 def split_text_block(original: str, translated: str) -> List[str]:
     # This is a simple split strategy. May need a more sophisticated one
-    # depending on how your translation API behaves.
+
     original_words = original.split()
     translated_words = translated.split()
     
